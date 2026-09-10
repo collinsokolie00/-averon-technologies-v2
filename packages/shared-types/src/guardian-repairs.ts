@@ -7,10 +7,18 @@ export interface GuardianAssertionResult { assertionId: string; resource: string
 export type GuardianRepairStepStatus = "PENDING" | "EXECUTING" | "VERIFYING" | "COMPLETED" | "FAILED";
 export interface GuardianRepairStepInput { stepId: string; order: number; dependencies: string[]; authorizedActionId: string; actionType: Exclude<GuardianRepairActionType, "UNSUPPORTED"> }
 export interface GuardianRepairStepSimulation { status: "PASSED" | "FAILED"; simulatedAt: string; compatibilityEvidence: string[] }
+export type GuardianRepairAttemptOutcome = "RUNNING" | "SUCCEEDED" | "FAILED" | "BLOCKED";
+export interface GuardianRepairStepAttempt {
+  attemptId: string; planId: string; stepId: string; attemptNumber: 1 | 2;
+  startedAt: string; completedAt?: string; outcome: GuardianRepairAttemptOutcome; failureCode?: string;
+  approvedPlanDigest: string; evidenceRevision: string; sourceRevision: string;
+  verificationResult?: "NOT_RUN" | "PASSED" | "FAILED";
+}
 export interface GuardianRepairStep extends GuardianRepairStepInput {
   target: string; expectedResources: string[]; verificationAssertions: GuardianVerificationAssertion[];
   simulation?: GuardianRepairStepSimulation; executionStatus: GuardianRepairStepStatus;
   verificationStatus: "pending" | "passed" | "failed"; executionRunId?: string; verificationRunId?: string; failureCode?: string;
+  attempts?: GuardianRepairStepAttempt[];
 }
 export interface GuardianRepairPlan {
   repairPlanId: string; workspaceId: string; websiteId: string; findingId: string; reportId: string;
