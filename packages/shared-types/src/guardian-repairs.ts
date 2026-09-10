@@ -1,4 +1,4 @@
-export type GuardianRepairPlanStatus = "DRAFT" | "AWAITING_APPROVAL" | "APPROVED" | "EXECUTING" | "VERIFYING" | "COMPLETED" | "FAILED" | "REJECTED" | "CANCELLED" | "ROLLBACK_REQUIRED" | "ROLLED_BACK";
+export type GuardianRepairPlanStatus = "DRAFT" | "AWAITING_APPROVAL" | "APPROVED" | "EXECUTING" | "VERIFYING" | "COMPLETED" | "FAILED" | "REJECTED" | "CANCELLED" | "ROLLBACK_REQUIRED" | "ROLLBACK_FAILED" | "ROLLED_BACK";
 export type GuardianRepairActionType = "frontend.source.apply" | "backend.source.apply" | "UNSUPPORTED";
 export interface GuardianRepairTransition { status: GuardianRepairPlanStatus; occurredAt: string; actorId: string; requestId: string }
 export type GuardianVerificationMethod = "source_readback" | "bounded_test" | "browser_check" | "endpoint_check";
@@ -32,6 +32,22 @@ export interface GuardianRepairStep extends GuardianRepairStepInput {
   simulation?: GuardianRepairStepSimulation; executionStatus: GuardianRepairStepStatus;
   verificationStatus: "pending" | "passed" | "failed"; executionRunId?: string; verificationRunId?: string; failureCode?: string;
   attempts?: GuardianRepairStepAttempt[];
+  rollbackSupported?: boolean; rollbackBaselineAssertions?: GuardianVerificationAssertion[]; mutationApplied?: boolean;
+  rollbackState?: "INELIGIBLE" | "ELIGIBLE" | "VALIDATING" | "EXECUTING" | "VERIFYING" | "COMPLETED" | "FAILED";
+}
+export interface GuardianRepairRollbackStep {
+  stepId: string; executionOrder: number; rollbackOrder: number; actionId: string;
+  actionType: Exclude<GuardianRepairActionType, "UNSUPPORTED">; resources: string[];
+  postRepairAssertions: GuardianVerificationAssertion[]; baselineAssertions: GuardianVerificationAssertion[];
+  state: "PENDING" | "VALIDATING" | "EXECUTING" | "VERIFYING" | "COMPLETED" | "FAILED";
+  attemptCount: 0 | 1; startedAt?: string; completedAt?: string; failureCode?: string;
+  validationEvidence: string[]; executionEvidence: string[]; verificationEvidence: string[]; verificationPassed?: boolean;
+}
+export interface GuardianRepairRollbackAuditEvent { event: string; stepId?: string; occurredAt: string; code?: string }
+export interface GuardianRepairRollbackCoordination {
+  reason: string; initiatingFailedStepId?: string; originalFailureCode?: string; sequence: GuardianRepairRollbackStep[];
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "MANUAL_INTERVENTION_REQUIRED";
+  startedAt: string; completedAt?: string; failedStepId?: string; failureCode?: string; auditEvents: GuardianRepairRollbackAuditEvent[];
 }
 export interface GuardianRepairPlan {
   repairPlanId: string; workspaceId: string; websiteId: string; findingId: string; reportId: string;
@@ -49,6 +65,7 @@ export interface GuardianRepairPlan {
   steps?: GuardianRepairStep[]; simulationStatus?: "NOT_RUN" | "PASSED" | "FAILED"; simulatedPlanDigest?: string;
   approvedPlanDigest?: string; simulatedVersion?: number; currentStepId?: string;
   specialistContributions?: GuardianSpecialistContribution[]; specialistAssessment?: GuardianSpecialistAssessment;
+  rollbackCoordination?: GuardianRepairRollbackCoordination;
 }
 export interface GuardianRepairActionMetadata {
   actionId: string; actionType: "guardian.repair.plan"; status: "proposed" | "approval_required" | "executing" | "verifying" | "rollback_required" | "completed" | "failed" | "rejected";
