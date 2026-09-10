@@ -14,6 +14,19 @@ export interface GuardianRepairStepAttempt {
   approvedPlanDigest: string; evidenceRevision: string; sourceRevision: string;
   verificationResult?: "NOT_RUN" | "PASSED" | "FAILED";
 }
+export type GuardianSpecialistRecommendation = "PROCEED" | "PROCEED_WITH_WARNINGS" | "NEEDS_MORE_EVIDENCE" | "BLOCK";
+export type GuardianSpecialistAssessmentStatus = "PROCEED" | "PROCEED_WITH_WARNINGS" | "NEEDS_MORE_EVIDENCE" | "BLOCKED";
+export interface GuardianSpecialistContribution {
+  contributionId: string; repairPlanId: string; workspaceId: string; planVersion: number;
+  specialistId: string; specialistRunId?: string; advisoryRole: "DOMAIN_ANALYSIS" | "QUALITY_REVIEW" | "SECURITY_REVIEW" | "CRITICAL_REVIEW";
+  evidenceReferences: string[]; recommendation: GuardianSpecialistRecommendation;
+  assessment?: { confidence?: number; warnings?: string[] }; requiresPlanRevision?: boolean;
+  validationStatus: "VALID" | "INVALID"; validationFailureCode?: string; createdAt: string;
+}
+export interface GuardianSpecialistAssessment {
+  status: GuardianSpecialistAssessmentStatus; contributionIds: string[]; disagreements: string[];
+  blockingConcerns: string[]; warnings: string[]; assessedAt: string; planVersion: number;
+}
 export interface GuardianRepairStep extends GuardianRepairStepInput {
   target: string; expectedResources: string[]; verificationAssertions: GuardianVerificationAssertion[];
   simulation?: GuardianRepairStepSimulation; executionStatus: GuardianRepairStepStatus;
@@ -35,6 +48,7 @@ export interface GuardianRepairPlan {
   failureCode?: string;
   steps?: GuardianRepairStep[]; simulationStatus?: "NOT_RUN" | "PASSED" | "FAILED"; simulatedPlanDigest?: string;
   approvedPlanDigest?: string; simulatedVersion?: number; currentStepId?: string;
+  specialistContributions?: GuardianSpecialistContribution[]; specialistAssessment?: GuardianSpecialistAssessment;
 }
 export interface GuardianRepairActionMetadata {
   actionId: string; actionType: "guardian.repair.plan"; status: "proposed" | "approval_required" | "executing" | "verifying" | "rollback_required" | "completed" | "failed" | "rejected";
