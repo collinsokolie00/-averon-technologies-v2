@@ -1,8 +1,6 @@
-const posts = [
-    "How AI is changing modern business",
-    "Why every business needs a strong digital platform",
-    "Building products with quality before speed",
-];
+import { Link } from "react-router";
+
+import { blogArticles } from "../../data/blogArticles";
 
 export default function BlogPreview() {
     return (
@@ -14,12 +12,13 @@ export default function BlogPreview() {
                 </div>
 
                 <div className="blog-grid">
-                    {posts.map((post) => (
-                        <article className="blog-card" key={post}>
+                    {blogArticles.slice(0, 3).map((post) => (
+                        <Link className="blog-card" to={`/blog/${post.slug}`} key={post.slug}>
+                            <img src={post.image} alt="" />
                             <span>Averon Journal</span>
-                            <h3>{post}</h3>
-                            <p>Short articles and lessons from building real digital products.</p>
-                        </article>
+                            <h3>{post.title}</h3>
+                            <p>{post.excerpt}</p>
+                        </Link>
                     ))}
                 </div>
             </div>

@@ -1,0 +1,11 @@
+import { notificationCategories, type WorkspaceNotificationCategory, type WorkspaceNotificationStatus } from "@averon/shared-types";
+import { ApiError } from "../../errors/api-error.ts";
+import type { AuthContext } from "../../services/auth/authentication.ts";
+import type { WorkspaceNotificationService } from "./workspace-notification.service.ts";
+
+export async function handleWorkspaceNotificationRoute(input: { method: string; path: string; query: URLSearchParams; body: unknown; auth: AuthContext; requestId?: string; service: WorkspaceNotificationService }) {
+  if (input.path === "/api/v1/workspace-notifications" && input.method === "GET") { const category = input.query.get("category") || undefined; const status = input.query.get("status") || undefined; if (category && !notificationCategories.includes(category as WorkspaceNotificationCategory)) throw new ApiError(400, "NOTIFICATION_FILTER_INVALID", "The category filter is invalid."); if (status && !["read", "unread"].includes(status)) throw new ApiError(400, "NOTIFICATION_FILTER_INVALID", "The status filter is invalid."); return { status: 200, data: await input.service.list(input.auth, { workspaceId: input.query.get("workspaceId") || undefined, category: category as WorkspaceNotificationCategory | undefined, status: status as WorkspaceNotificationStatus | undefined }) }; }
+  const match = /^\/api\/v1\/workspace-notifications\/([^/]+)$/.exec(input.path); if (match && input.method === "PATCH") { const body = input.body as Record<string, unknown>; if (!body || Object.keys(body).some((key) => key !== "status") || !["read", "unread"].includes(String(body.status))) throw new ApiError(400, "NOTIFICATION_STATUS_INVALID", "A valid notification status is required."); return { status: 200, data: await input.service.setStatus(input.auth, decodeURIComponent(match[1]), body.status as WorkspaceNotificationStatus) }; }
+  const health = /^\/api\/v1\/workspaces\/([^/]+)\/health-reviews$/.exec(input.path); if (health && input.method === "POST") { const body = input.body as Record<string, unknown>; if (!body || Object.keys(body).length) throw new ApiError(400, "HEALTH_REVIEW_INPUT_NOT_ALLOWED", "Health evidence is collected authoritatively by the server."); return { status: 201, data: await input.service.healthReview(input.auth, decodeURIComponent(health[1]), input.requestId) }; }
+  return null;
+}

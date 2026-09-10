@@ -3,13 +3,36 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "npm run dev:averon",
+    "dev:averon": "vite --port 5173 --strictPort",
+    "dev:emmy": "npm run dev --workspace @averon/emmy-app",
+    "dev:api": "npm run dev --workspace @averon/api",
+    "dev:all": "node scripts/dev-all.mjs",
+    "dev:provision-customer": "node --env-file-if-exists=.env scripts/provision-codex-customer.mjs",
+    "dev:provision-project": "node --env-file-if-exists=.env --env-file-if-exists=apps/averon-api/.env --experimental-strip-types scripts/provision-codex-project.mjs",
+    "dev:accept-customer-files": "node --env-file-if-exists=.env --env-file-if-exists=apps/averon-api/.env --experimental-strip-types scripts/accept-customer-files.mjs",
+    "check:blog-action-runtime": "node scripts/check-blog-action-runtime.mjs",
+    "build": "npm run build:averon && npm run build --workspace @averon/emmy-app && npm run build --workspace @averon/api",
+    "build:averon": "tsc -b && vite build",
+    "typecheck": "tsc -b && npm run typecheck --workspace @averon/emmy-app && npm run typecheck --workspace @averon/api",
     "lint": "eslint .",
+    "test": "npm run test --workspace @averon/api && npm run test --workspace @averon/emmy-app",
+    "test:metadata": "vitest run --config vitest.metadata.config.ts",
+    "eval": "npm run eval:orchestration && npm run eval:golden && npm run eval:swarm && npm run eval:swarm-quality",
+    "eval:orchestration": "node --experimental-strip-types evals/orchestration/run.ts",
+    "eval:golden": "node --experimental-strip-types evals/golden/run.ts",
+    "eval:swarm": "node --experimental-strip-types evals/swarm/run.ts",
+    "eval:swarm-quality": "node --experimental-strip-types evals/swarm-quality/run.ts",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@averon/api-client": "0.1.0",
+    "firebase": "^12.16.0",
     "lucide-react": "^0.542.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -21,12 +44,15 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "@testing-library/react": "^16.3.3",
     "eslint": "^10.6.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.62.0",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "vitest": "^4.1.11",
+    "jsdom": "^29.1.1"
   }
 }

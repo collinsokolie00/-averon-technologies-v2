@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { NavLink } from "react-router";
+import { UserRound } from "lucide-react";
+import { averonBrandIdentity } from "../../data/brandIdentity";
 
 const links = [
     { label: "Home", to: "/" },
     { label: "Products", to: "/products" },
     { label: "Services", to: "/services" },
     { label: "Technology", to: "/technology" },
-    { label: "Projects", to: "/projects" },
     { label: "Blog", to: "/blog" },
     { label: "Contact", to: "/contact" },
 ];
@@ -18,7 +19,8 @@ export default function Header() {
         <header className="header">
             <div className="container header-inner">
                 <NavLink className="logo" to="/" onClick={() => setOpen(false)}>
-                    Averon Technologies
+                    <img src={averonBrandIdentity.logo} alt="" />
+                    <span>{averonBrandIdentity.name}</span>
                 </NavLink>
 
                 <nav className={open ? "nav open" : "nav"}>
@@ -34,6 +36,13 @@ export default function Header() {
                         </NavLink>
                     ))}
                 </nav>
+
+                <div className="header-actions">
+                    <NavLink className="account-link" to="/client-portal" onClick={() => setOpen(false)}>
+                        <UserRound size={16} />
+                        Customer Portal
+                    </NavLink>
+                </div>
 
                 <button
                     type="button"

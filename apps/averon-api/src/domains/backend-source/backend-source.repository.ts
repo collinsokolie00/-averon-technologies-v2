@@ -1,0 +1,6 @@
+import { getFirebaseAdminServices } from "../../services/firebase/admin.ts";
+import type { BackendSourceProposal } from "./backend-source.actions.ts";
+
+export interface BackendSourceProposalRepository { get(actionId: string): Promise<BackendSourceProposal | null>; save(proposal: BackendSourceProposal): Promise<void> }
+export class MemoryBackendSourceProposalRepository implements BackendSourceProposalRepository { private readonly records = new Map<string, BackendSourceProposal>(); async get(id: string) { return structuredClone(this.records.get(id) ?? null); } async save(value: BackendSourceProposal) { this.records.set(value.actionId, structuredClone(value)); } }
+export class FirebaseBackendSourceProposalRepository implements BackendSourceProposalRepository { private readonly db; constructor(db = getFirebaseAdminServices().firestore) { this.db = db; } private collection() { return this.db.collection("sourceActionExecutions"); } async get(id: string) { const item = await this.collection().doc(id).get(); return item.exists ? item.data() as BackendSourceProposal : null; } async save(value: BackendSourceProposal) { await this.collection().doc(value.actionId).set({ ...structuredClone(value), updatedAt: new Date().toISOString() }); } }

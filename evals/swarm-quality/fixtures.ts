@@ -1,0 +1,30 @@
+export interface TeamQualityFixture {
+  name: string; message: string; requiredCapabilities: string[]; acceptableTeams: string[][]; prohibitedAgents: string[]; criticRequired: boolean; maximumTeamSize: number; expectedBudgetUnresolved?: boolean;
+}
+
+export const teamQualityFixtures: TeamQualityFixture[] = [
+  { name: "direct-business-fact", message: "What is our registered brand tone?", requiredCapabilities: [], acceptableTeams: [[]], prohibitedAgents: ["research", "marketing"], criticRequired: false, maximumTeamSize: 0 },
+  { name: "direct-workspace-context", message: "Which workspace am I in?", requiredCapabilities: [], acceptableTeams: [[]], prohibitedAgents: ["research"], criticRequired: false, maximumTeamSize: 0 },
+  { name: "direct-clarification", message: "Can you clarify that question?", requiredCapabilities: [], acceptableTeams: [[]], prohibitedAgents: ["documentation"], criticRequired: false, maximumTeamSize: 0 },
+  { name: "direct-insufficient-detail", message: "Help me with this", requiredCapabilities: [], acceptableTeams: [[]], prohibitedAgents: ["research", "analytics"], criticRequired: false, maximumTeamSize: 0 },
+  { name: "seo-metadata", message: "Draft an SEO meta description", requiredCapabilities: ["seo.content_strategy"], acceptableTeams: [["seo"]], prohibitedAgents: ["marketing", "blog", "research", "analytics"], criticRequired: false, maximumTeamSize: 1 },
+  { name: "frontend-accessibility", message: "Review frontend architecture and accessibility", requiredCapabilities: ["development.frontend_analysis"], acceptableTeams: [["frontend"]], prohibitedAgents: ["backend", "testing"], criticRequired: false, maximumTeamSize: 1 },
+  { name: "backend-database", message: "Design the backend API and database model", requiredCapabilities: ["development.backend_architecture", "database.schema_design"], acceptableTeams: [["backend", "database"]], prohibitedAgents: ["frontend", "testing"], criticRequired: false, maximumTeamSize: 2 },
+  { name: "authentication-security", message: "Review authentication architecture and security", requiredCapabilities: ["development.backend_architecture", "security.architecture_review", "verification.independent_review"], acceptableTeams: [["backend", "security", "critic"]], prohibitedAgents: ["frontend", "database"], criticRequired: true, maximumTeamSize: 3 },
+  { name: "backend-database-testing", message: "Review backend, database schema, and test strategy", requiredCapabilities: ["development.backend_architecture", "database.schema_design", "quality.test_strategy"], acceptableTeams: [["backend", "database", "testing"]], prohibitedAgents: ["frontend", "security"], criticRequired: false, maximumTeamSize: 3 },
+  { name: "full-feature", message: "Architect a frontend, backend, database model, and testing strategy", requiredCapabilities: ["development.frontend_analysis", "development.backend_architecture", "database.schema_design", "quality.test_strategy"], acceptableTeams: [["frontend", "backend", "database", "testing"]], prohibitedAgents: ["security", "critic"], criticRequired: false, maximumTeamSize: 4 },
+  { name: "secure-feature", message: "Architect a secure backend API, database schema, and authentication", requiredCapabilities: ["development.backend_architecture", "database.schema_design", "security.architecture_review", "verification.independent_review"], acceptableTeams: [["backend", "database", "security", "critic"]], prohibitedAgents: ["frontend", "testing"], criticRequired: true, maximumTeamSize: 4 },
+  { name: "marketing-seo-content", message: "Create a marketing strategy, SEO plan, and blog article", requiredCapabilities: ["seo.content_strategy", "content.blog_drafting", "marketing.strategy"], acceptableTeams: [[]], prohibitedAgents: ["research", "analytics"], criticRequired: false, maximumTeamSize: 0, expectedBudgetUnresolved: true },
+  { name: "sales-customer", message: "Improve our sales strategy and customer operations workflow", requiredCapabilities: ["sales.strategy", "customer.operations"], acceptableTeams: [["sales", "customer-operations"]], prohibitedAgents: ["marketing"], criticRequired: false, maximumTeamSize: 2 },
+  { name: "operations-analytics", message: "Optimize business operations using analytics metrics", requiredCapabilities: ["operations.workflow_analysis", "analytics.interpretation"], acceptableTeams: [["business-operations", "analytics"]], prohibitedAgents: ["sales"], criticRequired: false, maximumTeamSize: 2 },
+  { name: "research-marketing", message: "Research our supplied competitors and create a marketing strategy", requiredCapabilities: ["research.internal_synthesis", "marketing.strategy"], acceptableTeams: [["research", "marketing"]], prohibitedAgents: ["seo", "blog"], criticRequired: false, maximumTeamSize: 2 },
+  { name: "business-os-documentation", message: "Draft documentation based on our Business OS facts", requiredCapabilities: ["documentation.sop_drafting"], acceptableTeams: [["documentation"]], prohibitedAgents: ["research"], criticRequired: false, maximumTeamSize: 1 },
+  { name: "high-impact-business", message: "Make a high-impact business decision about marketing strategy and sales strategy", requiredCapabilities: ["marketing.strategy", "sales.strategy", "verification.independent_review"], acceptableTeams: [["marketing", "sales", "critic"]], prohibitedAgents: ["analytics", "research"], criticRequired: true, maximumTeamSize: 3 },
+  { name: "live-research", message: "Find today's live competitors", requiredCapabilities: ["research.internal_synthesis"], acceptableTeams: [["research"]], prohibitedAgents: ["marketing"], criticRequired: false, maximumTeamSize: 1 },
+];
+
+export const skillGapFixtures = [
+  { capability: "external.live_web_research", frequency: 2, futureNeed: "Controlled external research source or future specialist/tool review" },
+  { capability: "legal.advice", frequency: 1, futureNeed: "Human-qualified legal review, not automatic agent expansion" },
+  { capability: "visual.asset_generation", frequency: 1, futureNeed: "Future governed media capability" },
+] as const;

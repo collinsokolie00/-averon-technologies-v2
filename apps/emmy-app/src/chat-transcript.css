@@ -1,0 +1,144 @@
+/* Full-width conversation transcript: messages sit directly on the chat canvas. */
+.message {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 22px 2px 26px;
+  border-bottom: 1px solid rgba(31, 48, 67, .72);
+}
+.message:last-of-type { border-bottom: 0; }
+.message.user {
+  width: min(76%, 760px);
+  margin-left: auto;
+}
+.message.user .message-content header { justify-content: flex-end; }
+.message.user .message-body { margin-left: auto; }
+.message-content,
+.message.user .message-content {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.message-body {
+  max-width: 920px;
+  margin-top: 14px;
+  color: #c0ceda;
+  font-size: .88rem;
+  line-height: 1.78;
+  overflow-wrap: anywhere;
+}
+.message-body p { margin: 0 0 13px; white-space: pre-wrap; }
+.message-body p:last-child { margin-bottom: 0; }
+.message-body h2,
+.message-body h3,
+.message-body h4 {
+  margin: 21px 0 9px;
+  color: #e1ebf3;
+  font-family: Manrope, sans-serif;
+  line-height: 1.35;
+}
+.message-body h2 { font-size: 1.12rem; }
+.message-body h3 { font-size: 1.02rem; }
+.message-body h4 { font-size: .94rem; }
+.message-body ul,
+.message-body ol { display: grid; gap: 7px; margin: 8px 0 15px; padding-left: 23px; }
+.message-body li { padding-left: 3px; }
+.message-body strong { color: #e0ebf4; font-weight: 650; }
+.streaming-body {
+  position: relative;
+  isolation: isolate;
+  white-space: pre-wrap;
+}
+.streaming-text {
+  position: relative;
+  z-index: 1;
+  display: block;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 1.55em), rgba(0, 0, 0, .78) calc(100% - .85em), rgba(0, 0, 0, .38) 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 1.55em), rgba(0, 0, 0, .78) calc(100% - .85em), rgba(0, 0, 0, .38) 100%);
+}
+.streaming-body::before {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  color: rgba(114, 188, 231, .96);
+  text-shadow: 0 2px 7px rgba(97, 228, 220, .78), 0 7px 17px rgba(87, 185, 255, .55);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent calc(100% - 1.65em), rgba(0, 0, 0, .42) calc(100% - 1.18em), #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, transparent calc(100% - 1.65em), rgba(0, 0, 0, .42) calc(100% - 1.18em), #000 100%);
+  content: attr(data-stream-content);
+  pointer-events: none;
+}
+.streaming-body::after {
+  position: absolute;
+  z-index: 0;
+  right: 2%;
+  bottom: -.32em;
+  left: 2%;
+  height: 1.45em;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(97, 228, 220, .34) 0, rgba(87, 185, 255, .22) 42%, transparent 76%);
+  filter: blur(6px);
+  content: "";
+  pointer-events: none;
+}
+.operation-card { margin-top: 16px; padding: 16px; border: 1px solid rgba(91, 199, 255, .2); border-radius: 14px; background: linear-gradient(145deg, rgba(12, 31, 46, .88), rgba(7, 20, 32, .72)); box-shadow: inset 0 1px rgba(255,255,255,.035); }
+.operation-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.operation-card > header div { display: grid; gap: 3px; }
+.operation-card > header small, .operation-card dt { color: #7890a4; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.operation-card > header strong { color: #edf8ff; font-size: 14px; }
+.operation-card dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 18px; margin: 0; }
+.operation-card dl div { min-width: 0; }
+.operation-card dd { margin: 3px 0 0; color: #bfd0dd; overflow-wrap: anywhere; }
+.operation-card details { margin-top: 13px; color: #7890a4; }
+.operation-card summary { cursor: pointer; font-size: 12px; }
+.operation-card details code { display: block; margin-top: 8px; color: #bfd0dd; overflow-wrap: anywhere; }
+.operation-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 15px; }
+.operation-actions button { min-height: 36px; padding: 0 14px; border: 1px solid #27435a; border-radius: 10px; background: rgba(255,255,255,.03); color: #bfd0dd; }
+.operation-actions .approve-action { border-color: rgba(67, 205, 235, .35); background: rgba(38, 168, 207, .16); color: #bdefff; }
+.operation-failed { border-color: rgba(255, 112, 112, .25); }
+.structured-surfaces { display: grid; gap: 12px; margin-top: 14px; }
+.compact-table-wrap { overflow-x: auto; border: 1px solid rgba(92, 190, 229, .2); border-radius: 12px; }
+.compact-table-wrap table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+.compact-table-wrap th, .compact-table-wrap td { padding: 9px 11px; text-align: left; border-bottom: 1px solid rgba(92, 190, 229, .12); }
+.compact-table-wrap th { color: #82d8f6; background: rgba(48, 155, 199, .08); }
+.structured-code { overflow-x: auto; padding: 12px; border: 1px solid rgba(92, 190, 229, .2); border-radius: 12px; background: rgba(2, 14, 24, .7); color: #d8f5ff; }
+.structured-code.diff { border-left: 3px solid #49c5e9; }
+.file-result-card { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 11px 12px; border: 1px solid rgba(92, 190, 229, .2); border-radius: 12px; }
+.file-result-card p { grid-column: 1 / -1; margin: 0; color: var(--muted); }
+.scroll-to-bottom {
+  position: fixed;
+  left: calc(272px + (100vw - 272px) / 2);
+  bottom: 132px;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid #31516b;
+  border-radius: 50%;
+  background: rgba(12, 25, 38, .96);
+  color: #8bd4f7;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .38);
+  backdrop-filter: blur(12px);
+  transform: translateX(-50%);
+}
+.scroll-to-bottom:hover { border-color: #5ebbf4; background: #12283a; color: #d8f2ff; }
+.scroll-to-bottom svg { width: 18px; height: 18px; }
+@media (prefers-reduced-motion: reduce) {
+  .streaming-body::before { text-shadow: 0 2px 6px rgba(97, 228, 220, .62); }
+  .streaming-body::after { filter: blur(5px); }
+}
+
+@media (max-width: 760px) {
+  .message.user { width: 92%; }
+  .operation-card dl { grid-template-columns: 1fr; }
+  .scroll-to-bottom { left: 50%; bottom: 124px; }
+}
+
+@media (min-width: 761px) and (max-width: 980px) {
+  .scroll-to-bottom { left: calc(230px + (100vw - 230px) / 2); }
+}

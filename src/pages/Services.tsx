@@ -1,6 +1,10 @@
+import { Link } from "react-router";
+
+import { openEmmyAssistant } from "../lib/emmyAssistant";
+import { usePageContent } from "../content/pageContent";
+
 const services = [
     {
-        number: "01",
         title: "Website Development",
         description:
             "Premium, responsive websites designed around your brand, business goals, and customer experience.",
@@ -12,7 +16,6 @@ const services = [
         ],
     },
     {
-        number: "02",
         title: "E-commerce Development",
         description:
             "Custom online stores built for reliable product management, secure checkout, and long-term growth.",
@@ -24,7 +27,6 @@ const services = [
         ],
     },
     {
-        number: "03",
         title: "AI Solutions",
         description:
             "AI assistants, intelligent tools, and workflow integrations designed to improve business operations.",
@@ -36,7 +38,6 @@ const services = [
         ],
     },
     {
-        number: "04",
         title: "Business Automation",
         description:
             "Connected systems that reduce repetitive work and make everyday business processes more efficient.",
@@ -48,7 +49,6 @@ const services = [
         ],
     },
     {
-        number: "05",
         title: "Product Engineering",
         description:
             "From the first concept to a working product, Averon helps turn ideas into scalable digital platforms.",
@@ -60,7 +60,6 @@ const services = [
         ],
     },
     {
-        number: "06",
         title: "Maintenance and Support",
         description:
             "Ongoing technical support, security improvements, updates, and performance optimization.",
@@ -82,31 +81,41 @@ const processSteps = [
 ];
 
 export default function Services() {
+    const { section } = usePageContent("services"); const intro = section("intro"); const ai = section("aiSolutions");
+    const canonicalServices = services.map((service) => service.title === "AI Solutions" ? { ...service, title: ai.title ?? service.title, description: ai.description ?? service.description } : service);
+    const topServices = canonicalServices.slice(0, 3);
+    const bottomServices = canonicalServices.slice(3);
+
     return (
         <>
             <section className="page-hero services-page-hero">
                 <div className="container">
-                    <span>Our Services</span>
+                    <span className="services-hero-eyebrow">Our Services</span>
 
-                    <h1>Technology solutions built around real business needs.</h1>
+                    <h1>{intro.heading}</h1>
 
-                    <p>
-                        Averon Technologies designs and develops websites, software,
-                        artificial-intelligence systems, commerce platforms, and business
-                        automation with quality and long-term growth in mind.
-                    </p>
+                    <p>{intro.intro}</p>
+
+                    <div className="services-hero-actions">
+                        <Link to="/contact?service=Project%20Consultation" className="btn-primary">
+                            Start a project
+                        </Link>
+                        <a href="#service-capabilities" className="btn-secondary">
+                            Explore services
+                        </a>
+                    </div>
                 </div>
             </section>
 
-            <section className="services-page">
+            <section className="services-page" id="service-capabilities">
                 <div className="container services-page-grid">
-                    {services.map((service) => (
+                    {topServices.map((service) => (
                         <article className="service-showcase-card" key={service.title}>
                             <div className="service-card-header">
-                                <span className="service-number">{service.number}</span>
-                                <span className="service-arrow" aria-hidden="true">
+                                <span className="service-kicker">Averon Service</span>
+                                <Link className="service-arrow" to={`/contact?service=${encodeURIComponent(service.title)}`} aria-label={`Discuss ${service.title}`}>
                                     ↗
-                                </span>
+                                </Link>
                             </div>
 
                             <h2>{service.title}</h2>
@@ -118,10 +127,55 @@ export default function Services() {
                                 ))}
                             </ul>
 
-                            <a href="/contact" className="service-card-link">
+                            <button
+                                type="button"
+                                className="service-card-link"
+                                onClick={() => openEmmyAssistant({
+                                    prompt: `Discuss ${service.title} for my business.`,
+                                    response: `${service.title} helps customers understand what Averon can build, how the service can support their goals, and what details are needed before a project starts.`,
+                                })}
+                            >
                                 Discuss this service
                                 <span aria-hidden="true">→</span>
-                            </a>
+                            </button>
+                        </article>
+                    ))}
+
+                    <article className="service-wide-banner">
+                        <span>Complete Delivery Partner</span>
+                        <h2>From first idea to launch, Averon connects strategy, design, engineering, automation, and long-term support.</h2>
+                        <Link to="/contact?service=Project%20Consultation">Start a project conversation →</Link>
+                    </article>
+
+                    {bottomServices.map((service) => (
+                        <article className="service-showcase-card" key={service.title}>
+                            <div className="service-card-header">
+                                <span className="service-kicker">Averon Service</span>
+                                <Link className="service-arrow" to={`/contact?service=${encodeURIComponent(service.title)}`} aria-label={`Discuss ${service.title}`}>
+                                    ↗
+                                </Link>
+                            </div>
+
+                            <h2>{service.title}</h2>
+                            <p>{service.description}</p>
+
+                            <ul>
+                                {service.features.map((feature) => (
+                                    <li key={feature}>{feature}</li>
+                                ))}
+                            </ul>
+
+                            <button
+                                type="button"
+                                className="service-card-link"
+                                onClick={() => openEmmyAssistant({
+                                    prompt: `Discuss ${service.title} for my business.`,
+                                    response: `${service.title} helps customers understand what Averon can build, how the service can support their goals, and what details are needed before a project starts.`,
+                                })}
+                            >
+                                Discuss this service
+                                <span aria-hidden="true">→</span>
+                            </button>
                         </article>
                     ))}
                 </div>
@@ -159,9 +213,9 @@ export default function Services() {
                         </p>
                     </div>
 
-                    <a href="/contact" className="btn-primary">
+                    <Link to="/contact?service=Project%20Consultation" className="btn-primary">
                         Contact Averon
-                    </a>
+                    </Link>
                 </div>
             </section>
         </>

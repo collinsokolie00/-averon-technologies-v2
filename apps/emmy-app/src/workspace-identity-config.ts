@@ -1,0 +1,5 @@
+import type { Workspace } from "@averon/shared-types";
+export const workspaceIdentityBySlug = Object.freeze({ averon: { name: "Averon Technologies", logoUrl: "/workspaces/averon-technologies.png" }, "averon-technologies": { name: "Averon Technologies", logoUrl: "/workspaces/averon-technologies.png" }, lumora: { name: "Lumora", logoUrl: "/workspaces/lumora.png" }, movento: { name: "Movento", logoUrl: "/workspaces/movento.png" } } satisfies Record<string, { name: string; logoUrl: string }>);
+export const workspaceLogoBySlug: Readonly<Record<string, string>> = Object.freeze(Object.fromEntries(Object.entries(workspaceIdentityBySlug).map(([slug, identity]) => [slug, identity.logoUrl])));
+export function workspaceLogo(workspace: Pick<Workspace, "slug" | "logoUrl">) { return workspace.logoUrl || workspaceLogoBySlug[workspace.slug.toLowerCase()]; }
+export function canonicalWorkspaceIdentity(slug: string) { return workspaceIdentityBySlug[slug.toLowerCase() as keyof typeof workspaceIdentityBySlug]; }

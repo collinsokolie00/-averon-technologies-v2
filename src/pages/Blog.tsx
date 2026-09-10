@@ -1,36 +1,13 @@
-const articles = [
-    {
-        category: "AI",
-        title: "How AI is changing modern businesses",
-        excerpt:
-            "Artificial intelligence is becoming part of everyday business operations, from customer support to automation.",
-    },
-    {
-        category: "Development",
-        title: "Building products with quality before speed",
-        excerpt:
-            "Why taking time to engineer software correctly creates better long-term products.",
-    },
-    {
-        category: "Technology",
-        title: "Choosing the right technology stack",
-        excerpt:
-            "Modern web applications require balanced decisions between performance, scalability and maintenance.",
-    },
-    {
-        category: "Business",
-        title: "Creating software that grows with your company",
-        excerpt:
-            "A scalable architecture reduces future development costs and improves reliability.",
-    },
-];
+import { Link } from "react-router";
+
+import { blogArticles } from "../data/blogArticles";
 
 export default function Blog() {
     return (
         <>
             <section className="page-hero blog-hero">
                 <div className="container">
-                    <span>Insights</span>
+                    <span className="blog-hero-eyebrow">Insights</span>
 
                     <h1>Engineering ideas, AI and product development.</h1>
 
@@ -38,20 +15,30 @@ export default function Blog() {
                         Discover articles, engineering notes and product updates from
                         Averon Technologies.
                     </p>
+
+                    <div className="blog-hero-actions">
+                        <a href="#latest-insights" className="btn-primary">
+                            Browse insights
+                        </a>
+                        <Link to="/contact?service=Project%20Consultation" className="btn-secondary">
+                            Discuss a project
+                        </Link>
+                    </div>
                 </div>
             </section>
 
-            <section className="journal">
+            <section className="journal" id="latest-insights">
                 <div className="container">
 
                     <div className="journal-grid">
 
-                        {articles.map((article) => (
+                        {blogArticles.map((article) => (
 
                             <article
                                 className="journal-card"
                                 key={article.title}
                             >
+                                <img src={article.image} alt="" />
 
                                 <span>{article.category}</span>
 
@@ -59,9 +46,12 @@ export default function Blog() {
 
                                 <p>{article.excerpt}</p>
 
-                                <button className="project-btn">
+                                <Link
+                                    className="project-btn"
+                                    to={`/blog/${article.slug}`}
+                                >
                                     Read Article →
-                                </button>
+                                </Link>
 
                             </article>
 
@@ -88,11 +78,11 @@ export default function Blog() {
 
                     </div>
 
-                    <button className="btn-primary">
+                    <Link className="btn-primary" to="/contact?service=Averon%20Journal%20Subscription">
 
                         Subscribe
 
-                    </button>
+                    </Link>
 
                 </div>
 

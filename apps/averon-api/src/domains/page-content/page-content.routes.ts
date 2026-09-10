@@ -1,0 +1,4 @@
+import type { StaticPageId } from "@averon/shared-types";
+import { ApiError } from "../../errors/api-error.ts";
+import type { PageContentService } from "./page-content.service.ts";
+export async function handlePublicPageContentRoute(input: { method: string; path: string; service: PageContentService }) { const match = /^\/api\/v1\/public\/workspaces\/([^/]+)\/page-content\/(home|services)$/.exec(input.path); if (!match || input.method !== "GET") return null; const workspaceId = decodeURIComponent(match[1]); if (!/^[a-z0-9-]{1,64}$/.test(workspaceId)) throw new ApiError(400, "PAGE_CONTENT_TARGET_INVALID", "A valid content target is required."); const item = await input.service.read(workspaceId, match[2] as StaticPageId); if (!item) throw new ApiError(404, "PAGE_CONTENT_NOT_FOUND", "Page content was not found."); return { status: 200, data: item }; }

@@ -1,18 +1,48 @@
+import { useState, type FormEvent } from "react";
 import {
-    Globe,
-    Instagram,
-    Linkedin,
     Mail,
     MapPin,
     Phone,
 } from "lucide-react";
 
+import { submitQuote } from "../services/customerWorkflow";
+
 export default function Contact() {
+    const [status, setStatus] = useState("");
+    const [error, setError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        setStatus("");
+        setError("");
+        setIsSubmitting(true);
+
+        const form = new FormData(event.currentTarget);
+
+        try {
+            await submitQuote({
+                customerEmail: String(form.get("email") || ""),
+                customerName: String(form.get("fullName") || ""),
+                company: String(form.get("company") || ""),
+                projectType: String(form.get("projectType") || "Project Consultation"),
+                budget: String(form.get("budget") || "not-sure"),
+                message: String(form.get("message") || ""),
+            });
+            event.currentTarget.reset();
+            setStatus("Quote request submitted. Averon will review it in Admin.");
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : "Unable to submit quote.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
     return (
         <>
             <section className="page-hero contact-hero">
                 <div className="container">
-                    <span>Contact Averon</span>
+                    <span className="contact-hero-eyebrow">Contact Averon</span>
 
                     <h1>Let&apos;s build something exceptional together.</h1>
 
@@ -75,48 +105,16 @@ export default function Contact() {
                             </div>
                         </div>
 
-                        <div className="social-area">
-                            <span>Connect with Averon</span>
-
-                            <div className="social-row">
-                                <a
-                                    href="#"
-                                    aria-label="Averon Technologies on LinkedIn"
-                                    title="LinkedIn"
-                                >
-                                    <Linkedin size={20} />
-                                </a>
-
-                                <a
-                                    href="#"
-                                    aria-label="Averon Technologies on Instagram"
-                                    title="Instagram"
-                                >
-                                    <Instagram size={20} />
-                                </a>
-
-                                <a
-                                    href="#"
-                                    aria-label="Averon Technologies website"
-                                    title="Website"
-                                >
-                                    <Globe size={20} />
-                                </a>
-                            </div>
-                        </div>
                     </div>
 
                     <form
                         className="contact-form"
-                        onSubmit={(event) => event.preventDefault()}
+                        onSubmit={handleSubmit}
                     >
                         <div className="contact-form-heading">
                             <span>Project Inquiry</span>
                             <h2>Tell us about your project.</h2>
-                            <p>
-                                Complete the form below and we will contact you to discuss the
-                                requirements.
-                            </p>
+                            <p>Share your project details and Averon will review your inquiry.</p>
                         </div>
 
                         <div className="contact-form-row">
@@ -168,12 +166,12 @@ export default function Contact() {
                                     <option value="" disabled>
                                         Select a service
                                     </option>
-                                    <option value="website">Website Development</option>
-                                    <option value="ecommerce">E-commerce Development</option>
-                                    <option value="ai">AI Solution</option>
-                                    <option value="automation">Business Automation</option>
-                                    <option value="software">Custom Software</option>
-                                    <option value="maintenance">Maintenance and Support</option>
+                                    <option value="Website Development">Website Development</option>
+                                    <option value="E-commerce Development">E-commerce Development</option>
+                                    <option value="AI Solution">AI Solution</option>
+                                    <option value="Business Automation">Business Automation</option>
+                                    <option value="Product Engineering">Product Engineering</option>
+                                    <option value="Maintenance and Support">Maintenance and Support</option>
                                     <option value="other">Other</option>
                                 </select>
                             </div>
@@ -205,12 +203,19 @@ export default function Contact() {
                             />
                         </div>
 
-                        <button type="submit" className="btn-primary contact-submit">
-                            Send Inquiry
+                        <button
+                            type="submit"
+                            className="btn-primary contact-submit"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? "Sending inquiry…" : "Send Project Inquiry"}
                         </button>
 
+                        {status && <p className="form-alert success" role="status">{status}</p>}
+                        {error && <p className="form-alert error" role="alert">{error}</p>}
+
                         <p className="contact-form-note">
-                            This form will be connected to Firebase during the backend phase.
+                            Averon will use these details only to review and respond to your inquiry.
                         </p>
                     </form>
                 </div>

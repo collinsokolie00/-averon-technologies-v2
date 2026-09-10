@@ -1,9 +1,17 @@
 .contact-hero {
-    background: linear-gradient(180deg, #ffffff, #f5f8fc);
+    color: #ffffff;
+    background:
+        linear-gradient(90deg, rgba(7, 21, 39, .92), rgba(14, 165, 233, .42)),
+        url("https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1800&q=80") center/cover;
+}
+
+.contact-hero p {
+    color: #dbeafe;
 }
 
 .contact-section {
     padding: 100px 0;
+    background: linear-gradient(180deg, #eaf7ff, #ffffff);
 }
 
 .contact-grid {
@@ -15,6 +23,7 @@
 .contact-info h2 {
     margin-bottom: 20px;
     font-size: 2.5rem;
+    color: #071527;
 }
 
 .contact-info p {
@@ -28,6 +37,12 @@
     gap: 18px;
     margin-bottom: 30px;
     align-items: flex-start;
+    border: 1px solid rgba(14, 165, 233, .18);
+    border-radius: 18px;
+    padding: 18px;
+    background: rgba(255, 255, 255, .78);
+    text-decoration: none;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .06);
 }
 
 .info-item strong {
@@ -54,11 +69,52 @@
 .contact-form {
     display: grid;
     gap: 20px;
-    padding: 40px;
+    padding: 42px;
     background: white;
-    border-radius: 28px;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
+    border-radius: 22px;
+    border: 1px solid rgba(14, 165, 233, .18);
+    box-shadow: 0 26px 70px rgba(15, 23, 42, .12);
+}
+
+.contact-form-heading {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+}
+
+.contact-form-heading span,
+.contact-eyebrow,
+.social-area > span {
+    color: #0ea5e9;
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.contact-form-heading h2 {
+    margin: 10px 0;
+    font-size: 2rem;
+}
+
+.contact-form-heading p {
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.contact-form-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.input-group {
+    display: grid;
+    gap: 8px;
+}
+
+.input-group label {
+    color: #102033;
+    font-weight: 850;
 }
 
 .contact-form input,
@@ -66,7 +122,7 @@
 .contact-form textarea {
     padding: 16px;
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 12px;
     font: inherit;
     background: #fafcff;
 }
@@ -78,6 +134,10 @@
 @media(max-width:900px) {
 
     .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-form-row {
         grid-template-columns: 1fr;
     }
 

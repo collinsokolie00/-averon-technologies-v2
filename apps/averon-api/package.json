@@ -1,0 +1,28 @@
+{
+  "name": "@averon/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env --experimental-strip-types src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "migrate:averon-business-os": "node --env-file-if-exists=.env --experimental-strip-types src/migrations/import-averon-public-knowledge.ts",
+    "migrate:averon-page-metadata": "node --env-file-if-exists=.env --experimental-strip-types src/migrations/seed-averon-page-metadata.ts",
+    "migrate:averon-page-content": "node --env-file-if-exists=.env --experimental-strip-types src/migrations/seed-averon-page-content.ts",
+    "migrate:guardian-websites": "node --env-file-if-exists=.env --experimental-strip-types src/migrations/seed-guardian-websites.ts"
+  },
+  "dependencies": {
+    "@averon/agent-contracts": "0.1.0",
+    "@averon/shared-types": "0.1.0",
+    "@averon/validation": "0.1.0",
+    "firebase-admin": "^14.1.0",
+    "playwright-core": "^1.63.0",
+    "stripe": "^22.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "typescript": "~6.0.2"
+  }
+}

@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 export default function ContactCTA() {
     return (
         <section className="contact-cta">
@@ -11,7 +13,7 @@ export default function ContactCTA() {
                     </p>
                 </div>
 
-                <button className="btn-primary">Start a Project</button>
+                <Link className="btn-primary" to="/contact?service=Project%20Consultation">Start a Project</Link>
             </div>
         </section>
     );

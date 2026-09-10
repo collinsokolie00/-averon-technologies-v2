@@ -10,4 +10,7 @@ html {
 
 body {
     min-height: 100vh;
+    background:
+        linear-gradient(180deg, #dff2ff 0%, #edf8ff 42%, #f7fbff 100%);
+    color: var(--text);
 }

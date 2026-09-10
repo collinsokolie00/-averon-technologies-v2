@@ -2,7 +2,6 @@ import { Link } from "react-router";
 
 const technologyGroups = [
     {
-        number: "01",
         category: "Frontend Engineering",
         description:
             "Modern interfaces built for speed, accessibility, responsiveness, and long-term maintainability.",
@@ -16,7 +15,6 @@ const technologyGroups = [
         ],
     },
     {
-        number: "02",
         category: "Backend and Infrastructure",
         description:
             "Reliable application foundations for business logic, data management, integrations, and secure operations.",
@@ -30,7 +28,6 @@ const technologyGroups = [
         ],
     },
     {
-        number: "03",
         category: "Artificial Intelligence",
         description:
             "Multi-model AI systems, intelligent assistants, agent workflows, image generation, and automation.",
@@ -44,7 +41,6 @@ const technologyGroups = [
         ],
     },
     {
-        number: "04",
         category: "Commerce and Payments",
         description:
             "Secure payment flows, product systems, supplier integrations, and scalable e-commerce experiences.",
@@ -58,7 +54,6 @@ const technologyGroups = [
         ],
     },
     {
-        number: "05",
         category: "Deployment and Operations",
         description:
             "Tools for version control, deployment, performance, monitoring, and dependable product delivery.",
@@ -97,7 +92,7 @@ export default function Technology() {
         <>
             <section className="page-hero technology-page-hero">
                 <div className="container">
-                    <span>Our Technology</span>
+                    <span className="technology-hero-eyebrow">Our Technology</span>
 
                     <h1>The systems behind everything we build.</h1>
 
@@ -106,10 +101,19 @@ export default function Technology() {
                         backend systems, artificial intelligence, commerce infrastructure,
                         and cloud tools to create dependable digital products.
                     </p>
+
+                    <div className="technology-hero-actions">
+                        <a href="#technology-capabilities" className="btn-primary">
+                            Explore capabilities
+                        </a>
+                        <Link to="/contact?service=Technology%20Consultation" className="btn-secondary">
+                            Discuss a system
+                        </Link>
+                    </div>
                 </div>
             </section>
 
-            <section className="technology-directory">
+            <section className="technology-directory" id="technology-capabilities">
                 <div className="container">
                     <div className="technology-intro">
                         <span>Technology Directory</span>
@@ -128,10 +132,6 @@ export default function Technology() {
                     <div className="technology-groups">
                         {technologyGroups.map((group) => (
                             <article className="technology-group" key={group.category}>
-                                <div className="technology-group-number">
-                                    {group.number}
-                                </div>
-
                                 <div className="technology-group-copy">
                                     <h3>{group.category}</h3>
                                     <p>{group.description}</p>
@@ -162,42 +162,38 @@ export default function Technology() {
                             product.
                         </p>
 
-                        <Link to="/projects" className="technology-text-link">
-                            Explore what we are building
+                        <Link to="/contact" className="technology-text-link">
+                            Start a project inquiry
                             <span aria-hidden="true">→</span>
                         </Link>
                     </div>
 
                     <div className="system-map" aria-label="Technology system layers">
-                        <div className="system-layer system-layer-primary">
-                            <span>01</span>
+                        <Link to="/technology/user-experience" className="system-layer system-layer-primary">
                             <strong>User Experience</strong>
                             <small>Interfaces and interactions</small>
-                        </div>
+                        </Link>
 
                         <div className="system-connector" />
 
-                        <div className="system-layer">
-                            <span>02</span>
+                        <Link to="/technology/application-logic" className="system-layer">
                             <strong>Application Logic</strong>
                             <small>Features and business rules</small>
-                        </div>
+                        </Link>
 
                         <div className="system-connector" />
 
-                        <div className="system-layer">
-                            <span>03</span>
+                        <Link to="/technology/data-integrations" className="system-layer">
                             <strong>Data and Integrations</strong>
                             <small>Storage, APIs, AI, and payments</small>
-                        </div>
+                        </Link>
 
                         <div className="system-connector" />
 
-                        <div className="system-layer">
-                            <span>04</span>
+                        <Link to="/technology/infrastructure" className="system-layer">
                             <strong>Infrastructure</strong>
                             <small>Security, hosting, and monitoring</small>
-                        </div>
+                        </Link>
                     </div>
                 </div>
             </section>
@@ -210,10 +206,8 @@ export default function Technology() {
                     </div>
 
                     <div className="principles-grid">
-                        {principles.map((principle, index) => (
+                        {principles.map((principle) => (
                             <article className="principle-item" key={principle.title}>
-                                <span>{String(index + 1).padStart(2, "0")}</span>
-
                                 <div>
                                     <h3>{principle.title}</h3>
                                     <p>{principle.text}</p>

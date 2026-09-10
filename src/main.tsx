@@ -10,7 +10,6 @@ import "./styles/pages/home.css";
 import "./styles/pages/products.css";
 import "./styles/pages/services.css";
 import "./styles/pages/technology.css";
-import "./styles/pages/projects.css";
 import "./styles/pages/blog.css";
 import "./styles/pages/contact.css";
 import "./styles/reset.css";
