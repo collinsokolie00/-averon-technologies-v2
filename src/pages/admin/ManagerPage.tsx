@@ -128,6 +128,7 @@ export default function ManagerPage({ section }: { section: AdminSection }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [contractTitle, setContractTitle] = useState("Digital Platform Agreement");
+  const [contractScope, setContractScope] = useState("");
   const [depositAmount, setDepositAmount] = useState("25000");
   const [workspaceAccess, setWorkspaceAccess] = useState(false);
 
@@ -158,6 +159,22 @@ export default function ManagerPage({ section }: { section: AdminSection }) {
     if (reply === null) return;
     await updateQuoteReply(quoteId, status, reply);
     setAdminMessage("Quote updated in Firestore.");
+    setRefreshKey(key => key + 1);
+  }
+
+  async function handleIssueQuote(id: string) {
+    const adminReply = window.prompt("Commercial offer: scope, delivery terms, and conditions");
+    if (!adminReply) return;
+    const amount = window.prompt("Total quote amount in EUR");
+    if (amount === null) return;
+    try { await averonApi.business.issueQuote(id, {adminReply,amountCents:Math.round(Number(amount)*100),currency:"eur"}); setAdminMessage("Commercial quote issued."); setRefreshKey(key=>key+1); }
+    catch (caught) { setAdminMessage(caught instanceof Error ? caught.message : "Quote could not be issued."); }
+  }
+
+  async function handleMessageReply(id: string) {
+    const body = window.prompt("Reply to customer"); if (!body) return;
+    try { await averonApi.business.replyToMessage(id,body); setAdminMessage("Reply sent."); setRefreshKey(key=>key+1); }
+    catch (caught) { setAdminMessage(caught instanceof Error ? caught.message : "Reply failed."); }
   }
 
   async function handleAssignContract() {
@@ -172,7 +189,7 @@ export default function ManagerPage({ section }: { section: AdminSection }) {
       customerEmail: customer.email,
       customerName: customer.name,
       title: contractTitle,
-      scope: "Project scope, timeline, delivery terms, payment schedule, and acceptance criteria.",
+      scope: contractScope,
       depositAmountCents: Math.round(Number(depositAmount || "0") * 100),
       currency: "eur",
       workspaceAccess,
@@ -253,6 +270,7 @@ export default function ManagerPage({ section }: { section: AdminSection }) {
               Deposit amount EUR
               <input value={depositAmount} onChange={(event) => setDepositAmount(event.target.value)} inputMode="decimal" />
             </label>
+            <label>Contract scope and terms<textarea value={contractScope} onChange={event=>setContractScope(event.target.value)} maxLength={10000} required /></label>
             <label className="admin-checkbox-row">
               <input type="checkbox" checked={workspaceAccess} onChange={(event) => setWorkspaceAccess(event.target.checked)} />
               Workspace access active
@@ -290,6 +308,8 @@ export default function ManagerPage({ section }: { section: AdminSection }) {
                         Reply
                       </button>
                     )}
+                    {section.key === "quotes" && !["accepted","rejected","cancelled"].includes(row.status) && <button className="admin-secondary-button" type="button" onClick={()=>void handleIssueQuote(row.id)}>Issue commercial quote</button>}
+                    {section.key === "messages" && row.meta === "customer" && <button className="admin-secondary-button" type="button" onClick={()=>void handleMessageReply(row.id)}>Reply</button>}
                     {section.key === "messages" && row.status !== "read" && (
                       <button className="admin-secondary-button" type="button" onClick={() => void handleMarkRead(row.id)}>
                         Mark read

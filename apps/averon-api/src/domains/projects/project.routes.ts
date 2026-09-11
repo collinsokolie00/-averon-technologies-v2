@@ -4,8 +4,32 @@ import { requireAdmin } from "../../services/auth/authorization.ts";
 import type { RateLimiter } from "../../ai/emmy/rate-limiter.ts";
 import type { ProjectService } from "./project.service.ts";
 import type { ProjectRepository } from "./project.repository.ts";
+import { parseId } from "../business/business.schemas.ts";
 
 export async function handleProjectRoute(i:{method:string;path:string;body:unknown;auth:AuthContext;service:ProjectService;repository:ProjectRepository;limiter:RateLimiter}) {
+  const lifecycle = /^\/api\/v1\/admin\/projects\/([^/]+)\/lifecycle$/.exec(i.path);
+  if (lifecycle && i.method === "GET") {
+    requireAdmin(i.auth);
+    if (!i.repository.adminLifecycle) throw new ApiError(503,"UNAVAILABLE","Project lifecycle administration is unavailable.");
+    return {status:200,data:await i.repository.adminLifecycle(parseId(decodeURIComponent(lifecycle[1])))};
+  }
+  const update = /^\/api\/v1\/projects\/([^/]+)\/(milestones|change-requests)\/([^/]+)$/.exec(i.path);
+  if (update && i.method === "PATCH") {
+    requireAdmin(i.auth);
+    const projectId = parseId(decodeURIComponent(update[1])); const recordId = parseId(decodeURIComponent(update[3]));
+    const body = i.body as Record<string, unknown>;
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new ApiError(400,"VALIDATION_ERROR","An update object is required.");
+    if (update[2] === "milestones") {
+      if (Object.keys(body).some(key => !["status","progressPercent"].includes(key)) || !["pending","in_progress","completed","blocked"].includes(String(body.status)) || !Number.isInteger(body.progressPercent) || Number(body.progressPercent)<0 || Number(body.progressPercent)>100 || (body.status==="completed" && body.progressPercent!==100) || (body.status!=="completed" && body.progressPercent===100) || (body.status==="pending" && body.progressPercent!==0)) throw new ApiError(400,"VALIDATION_ERROR","A consistent milestone status and progress (0–100) are required.");
+      if (!i.repository.updateMilestone) throw new ApiError(503,"UNAVAILABLE","Milestone updates are unavailable.");
+      await i.repository.updateMilestone(projectId,recordId,body as {status:"pending"|"in_progress"|"completed"|"blocked";progressPercent:number},i.auth.user.userId);
+    } else {
+      if (Object.keys(body).some(key => key!=="status") || !["approved","declined","completed"].includes(String(body.status))) throw new ApiError(400,"VALIDATION_ERROR","A supported change decision is required.");
+      if (!i.repository.decideChange) throw new ApiError(503,"UNAVAILABLE","Change decisions are unavailable.");
+      await i.repository.decideChange(projectId,recordId,body.status as "approved"|"declined"|"completed",i.auth.user.userId);
+    }
+    return {status:200,data:{projectId,id:recordId,status:body.status}};
+  }
   if(i.method==="GET"&&i.path==="/api/v1/projects")return{status:200,data:{items:await i.service.list(i.auth.user.userId)}};
   if(i.method==="GET"&&i.path==="/api/v1/admin/projects"){requireAdmin(i.auth);return{status:200,data:{items:await i.service.adminProjects()}};}
   const download=/^\/api\/v1\/projects\/([^/]+)\/files\/([^/]+)\/download$/.exec(i.path);
@@ -22,6 +46,6 @@ export async function handleProjectRoute(i:{method:string;path:string;body:unkno
   requireAdmin(i.auth);
   if(i.method==="POST"&&action==="access/regenerate")return{status:200,data:await i.service.regenerate(id)};
   if(i.method==="PATCH"&&action==="admin"){const allowed=["title","summary","status","progressPercent","startDate","targetDate","accessEnabled"];if(Object.keys(body).some(k=>!allowed.includes(k)))throw new ApiError(400,"UNKNOWN_FIELDS","Unsupported project field.");await i.repository.updateAdmin(id,body);return{status:200,data:{projectId:id}};}
-  if(i.method==="POST"&&action==="milestones"){const milestone={title:String(body.title??""),description:String(body.description??""),status:String(body.status??"pending"),order:Number(body.order??0),targetDate:body.targetDate?String(body.targetDate):undefined};if(!milestone.title||!milestone.description||!["pending","in_progress","completed","blocked"].includes(milestone.status)||!Number.isInteger(milestone.order))throw new ApiError(400,"VALIDATION_ERROR","Valid milestone fields are required.");return{status:201,data:{milestoneId:await i.repository.addMilestone(id,milestone as never)}};}
+  if(i.method==="POST"&&action==="milestones"){const milestone={title:String(body.title??""),description:String(body.description??""),status:String(body.status??"pending"),order:Number(body.order??0),...(body.targetDate?{targetDate:String(body.targetDate)}:{})};if(!milestone.title||!milestone.description||!["pending","in_progress","completed","blocked"].includes(milestone.status)||!Number.isInteger(milestone.order))throw new ApiError(400,"VALIDATION_ERROR","Valid milestone fields are required.");return{status:201,data:{milestoneId:await i.repository.addMilestone(id,milestone as never)}};}
   return null;
 }

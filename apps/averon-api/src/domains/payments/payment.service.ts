@@ -24,5 +24,5 @@ export class PaymentService {
     return { checkoutUrl: checkout.url, checkoutReference: checkout.id, reused: false };
   }
   status(reference: string, customerId: string) { return this.repository.getPaymentStatus(reference, customerId); }
-  async reconcile(event: PaymentEvent) { const result=await this.repository.reconcile(event);if(result==="processed"&&event.type==="paid"&&this.onPaid)await this.onPaid(event);return result; }
+  async reconcile(event: PaymentEvent) { const result=await this.repository.reconcile(event);if(result!=="ignored"&&event.type==="paid"&&this.onPaid)await this.onPaid(event);return result; }
 }

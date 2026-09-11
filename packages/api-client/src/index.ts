@@ -102,6 +102,9 @@ export class AveronApiClient {
     history: (workspaceId: string) => this.request<{ items: BusinessOsHistoryItem[] }>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/business-os/history`),
   };
   business = {
+    decideQuote: (id: string, decision: "accepted" | "rejected", revision: number) => this.request<{quoteId:string;status:string}>(`/api/v1/quotes/${encodeURIComponent(id)}/decision`, {method:"PATCH",body:JSON.stringify({decision,revision})}),
+    replyToMessage: (id: string, body: string) => this.request<{messageId:string}>(`/api/v1/messages/${encodeURIComponent(id)}/reply`, {method:"POST",body:JSON.stringify({body})}),
+    issueQuote: (id: string, input: {adminReply:string;amountCents:number;currency:"eur"|"usd"}) => this.request<{quoteId:string}>(`/api/v1/quotes/${encodeURIComponent(id)}`, {method:"PATCH",body:JSON.stringify({...input,status:"approved"})}),
     list: (collection: "users" | "quotes" | "contracts" | "invoices" | "payments" | "messages" | "notifications" | "auditLogs") =>
       this.request<{ items: Array<{ id: string; [key: string]: unknown }> }>(`/api/v1/business/${collection}`),
     createQuote: (input: Record<string, unknown>) => this.request<{ quoteId: string }>("/api/v1/quotes", { method: "POST", body: JSON.stringify(input) }),
@@ -127,6 +130,9 @@ export class AveronApiClient {
     downloadFile: (projectId:string,fileId:string)=>this.request<{url:string;expiresAt:string}>(`/api/v1/projects/${encodeURIComponent(projectId)}/files/${encodeURIComponent(fileId)}/download`,{method:"POST",body:"{}"}),
   };
   adminProjects = {
+    lifecycle:(id:string)=>this.request<{milestones:CustomerProjectWorkspace["milestones"];changeRequests:CustomerProjectWorkspace["changeRequests"]}>(`/api/v1/admin/projects/${encodeURIComponent(id)}/lifecycle`),
+    updateMilestone:(projectId:string,id:string,input:{status:"pending"|"in_progress"|"completed"|"blocked";progressPercent:number})=>this.request<{id:string;status:string}>(`/api/v1/projects/${encodeURIComponent(projectId)}/milestones/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify(input)}),
+    decideChange:(projectId:string,id:string,status:"approved"|"declined"|"completed")=>this.request<{id:string;status:string}>(`/api/v1/projects/${encodeURIComponent(projectId)}/change-requests/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({status})}),
     list:()=>this.request<{items:Array<CustomerProjectSummary&{customerId:string;customerEmail:string}>}>("/api/v1/admin/projects"),
     uploadFile:(projectId:string,input:{name:string;description?:string;category:CustomerProjectFile["category"];deliveryStatus:CustomerProjectFile["deliveryStatus"];customerVisible:boolean;mimeType:string;contentBase64:string;idempotencyKey:string})=>this.request<{file:CustomerProjectFile;created:boolean}>(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/files`,{method:"POST",body:JSON.stringify(input)}),
   };

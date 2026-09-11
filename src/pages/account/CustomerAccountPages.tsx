@@ -137,6 +137,15 @@ export function AccountSectionPage() {
 }
 
 function RecordList({ section, records, loading, error, empty, onRefresh }: { section: string; records: CustomerPortalRecord[]; loading: boolean; error: string; empty: string; onRefresh: () => Promise<void> }) {
+  const [decisionError, setDecisionError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const decide = async (record: CustomerPortalRecord, decision: "accepted" | "rejected") => {
+    setBusy(true); setDecisionError("");
+    try { await averonApi.business.decideQuote(record.id,decision,Number(record.revision)); await onRefresh(); }
+    catch (caught) { setDecisionError(caught instanceof Error ? caught.message : "Quote decision failed."); }
+    finally { setBusy(false); }
+  };
+  if (section === "quotes") return <div className="account-panel">{decisionError && <p role="alert">{decisionError}</p>}{loading ? <p>Loading quotes...</p> : error ? <p role="alert">{error}</p> : records.length ? records.map(record=><article className="account-list-row" key={record.id}><div><h2>{String(record.projectType)}</h2><p>{String(record.message ?? "")}</p><p style={{whiteSpace:"pre-wrap"}}>{String(record.adminReply ?? "Awaiting Averon offer")}</p>{typeof record.amountCents === "number" && <p>{String(record.currency).toUpperCase()} {(record.amountCents/100).toFixed(2)}</p>}<p>Status: {String(record.status)} · Revision: {String(record.revision ?? "—")}</p>{record.status === "approved" && typeof record.amountCents === "number" && <><button disabled={busy} onClick={()=>void decide(record,"accepted")}>Accept quote</button><button disabled={busy} onClick={()=>void decide(record,"rejected")}>Reject quote</button></>}</div></article>) : <p>{empty}</p>}</div>;
   const markRead = async (record: CustomerPortalRecord) => { if (record.status !== "unread") return; if (section === "notifications") await averonApi.business.markNotificationRead(record.id); else if (section === "messages") await averonApi.customer.markMessageRead(record.id); await onRefresh(); };
   return <div className="account-panel">{loading ? <p>Loading {section}...</p> : error ? <p role="alert" className="form-alert error">{error}</p> : records.length ? records.map((record) => <div className="account-list-row" key={record.id}><div><strong>{String(record.title ?? record.subject ?? record.projectType ?? record.id)}</strong><span>{String(record.projectReference ?? record.id)}</span>{record.body ? <p>{String(record.body)}</p> : null}{section === "invoices" && typeof record.amountCents === "number" ? <p>{new Intl.NumberFormat(undefined, { style: "currency", currency: String(record.currency ?? "eur").toUpperCase() }).format(record.amountCents / 100)}</p> : null}</div><small>{String(record.status ?? "available")}</small>{record.status === "unread" && <button type="button" className="btn-secondary" onClick={() => void markRead(record)}>Mark read</button>}</div>) : <p>{empty}</p>}</div>;
 }
@@ -178,8 +187,9 @@ export function ContractsPage() {
   const workspaceUnlocked = Boolean(contractAssigned && contractSigned && depositPaid && contract?.workspaceAccess);
   const steps = contractSteps.map((step, index) => ({
     ...step,
-    complete: (index < 3 && contractAssigned) || (index === 3 && depositPaid) || (index === 4 && contractSigned),
-    locked: !contractAssigned || (index === 3 && !invoice) || (index === 4 && !depositPaid),
+    title: index === 4 ? "Typed-name acceptance" : step.title,
+    complete: (index < 3 && contractSigned) || (index === 3 && depositPaid) || (index === 4 && contractSigned),
+    locked: !contractAssigned || (index === 3 && !invoice),
   }));
 
   useEffect(() => {
@@ -226,8 +236,10 @@ export function ContractsPage() {
       <div className="account-page-header">
         <p className="section-kicker">Contracts</p>
         <h1>{contract ? `Contract workflow for ${contract.projectReference}.` : "No contract assigned yet."}</h1>
-        <p>{contract ? "Complete the required deposit and electronic signature steps to activate private workspace access." : "Averon Admin must assign a contract before payment, signature, or workspace access appears."}</p>
+        <p>{contract ? "Review the stored terms below. Typed-name acceptance and the required deposit may be completed in either order; both are required for project access." : "Averon Admin must assign a contract before payment, signature, or workspace access appears."}</p>
       </div>
+
+      {contract && <section className="account-panel"><h2>{contract.title}</h2><p>Version: {contract.contractVersion} · Assigned to: {contract.customerName}</p><p style={{whiteSpace:"pre-wrap"}}>{contract.scope}</p><p>Required deposit: {contract.currency.toUpperCase()} {(contract.depositAmountCents/100).toFixed(2)}. Project access also requires Averon authorization.</p><p>Entering your name records typed-name acceptance of these terms.</p></section>}
 
       <div className="contract-layout">
         <div className="contract-steps">
@@ -279,9 +291,9 @@ export function ContractsPage() {
               placeholder="Type your full legal name"
               value={typedSignature}
               onChange={(event) => setTypedSignature(event.target.value)}
-              disabled={!depositPaid || contractSigned}
+              disabled={contract?.status !== "assigned" || contractSigned}
             />
-            <button className="btn-secondary" type="button" onClick={handleSignature} disabled={!contract || !depositPaid || contractSigned || typedSignature.trim().length < 2}>
+            <button className="btn-secondary" type="button" onClick={handleSignature} disabled={contract?.status !== "assigned" || contractSigned || typedSignature.trim().length < 2}>
               <PenLine size={16} />
               {contractSigned ? "Signed" : "Sign Contract"}
             </button>

@@ -335,6 +335,7 @@ export function createRequestHandler(
         method: req.method ?? "GET", path: url.pathname,
         body: requestBody,
         auth, repository: dependencies.businessRepository,
+        activateContract: (id, customerId) => dependencies.projectService.activateContract(id, customerId),
       });
       if (businessRoute) { sendJson(res, businessRoute.status, success(businessRoute.data, requestId)); return; }
       sendJson(res, 404, failure("NOT_FOUND", "The requested endpoint does not exist.", requestId));

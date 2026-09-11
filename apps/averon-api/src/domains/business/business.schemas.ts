@@ -30,9 +30,14 @@ export function parseQuoteSubmission(value: unknown): QuoteSubmission {
   return { customerEmail, customerName: string(input, "customerName", 2, 120), company: string(input, "company", 0, 160), projectType: string(input, "projectType", 2, 120), budget: string(input, "budget", 1, 80), message: string(input, "message", 10, 5000) };
 }
 export function parseQuoteReply(value: unknown): QuoteReply {
-  const input = object(value); exactKeys(input, ["status", "adminReply"]);
+  const input = object(value); exactKeys(input, ["status", "adminReply", "amountCents", "currency"]);
   const status = input.status;
   if (status !== "approved" && status !== "replied" && status !== "cancelled") throw new ApiError(400, "VALIDATION_ERROR", "Quote status is invalid.");
+  if (status === "approved" || input.amountCents !== undefined || input.currency !== undefined) {
+    if (!Number.isSafeInteger(input.amountCents) || Number(input.amountCents) < 100 || !["eur", "usd"].includes(String(input.currency))) throw new ApiError(400, "VALIDATION_ERROR", "A commercial quote requires an amount in cents and currency.");
+    if (status !== "approved") throw new ApiError(400, "VALIDATION_ERROR", "Only an approved offer may contain commercial pricing.");
+    return { status, adminReply: string(input, "adminReply", 1, 5000), amountCents: Number(input.amountCents), currency: input.currency as "eur" | "usd" };
+  }
   return { status, adminReply: string(input, "adminReply", 1, 5000) };
 }
 export function parseCustomerProfileInput(value: unknown): CustomerProfileInput {

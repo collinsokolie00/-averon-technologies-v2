@@ -44,9 +44,11 @@ export class StripePaymentProvider implements PaymentProvider {
       "checkout.session.completed": "paid", "checkout.session.async_payment_succeeded": "paid",
       "checkout.session.async_payment_failed": "failed", "checkout.session.expired": "expired",
     };
-    const type = supported[event.type] ?? "unknown";
+    let type = supported[event.type] ?? "unknown";
     if (type === "unknown") return { eventId: event.id, type };
     const session = event.data.object as Stripe.Checkout.Session;
+    // Checkout completion is not settlement for delayed payment methods.
+    if (type === "paid" && session.payment_status !== "paid") type = "unknown";
     return { eventId: event.id, type, checkoutReference: session.id, invoiceId: session.metadata?.invoiceId, contractId: session.metadata?.contractId, customerId: session.metadata?.customerId, amountCents: session.amount_total ?? undefined, currency: session.currency ?? undefined };
   }
 }

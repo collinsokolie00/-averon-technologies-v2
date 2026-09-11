@@ -4,6 +4,8 @@ import { getFirebaseAdminServices } from "../../services/firebase/admin.ts";
 import type { AdminCollection, BusinessRecord, ContractAssignment, CustomerProfileInput, QuoteReply, QuoteSubmission } from "./business.types.ts";
 
 export interface BusinessRepository {
+  decideQuote?(id: string, customerId: string, decision: "accepted" | "rejected", revision: number): Promise<void>;
+  replyToMessage?(id: string, body: string, actorId: string): Promise<string>;
   list(collection: AdminCollection, customerId?: string): Promise<BusinessRecord[]>;
   get(collection: AdminCollection, id: string): Promise<BusinessRecord | null>;
   createQuote(customerId: string | null, quote: QuoteSubmission): Promise<string>;
@@ -24,7 +26,7 @@ export class FirebaseBusinessRepository implements BusinessRepository {
   constructor(db: Firestore = getFirebaseAdminServices().firestore) { this.db = db; }
   private timestamp() { return getFirebaseAdminServices().serverTimestamp(); }
   private timestampMillis(value: unknown) { return value && typeof value === "object" && "toMillis" in value && typeof value.toMillis === "function" ? value.toMillis() : 0; }
-  async list(name: AdminCollection, customerId?: string) {
+  async list(name: AdminCollection, customerId?: string): Promise<BusinessRecord[]> {
     try {
       const collection = this.db.collection(name);
       if (customerId) {
@@ -76,7 +78,15 @@ export class FirebaseBusinessRepository implements BusinessRepository {
     const [profile, quotes, contracts, invoices, messages, notifications] = await Promise.all([
       this.get("users", customerId), this.list("quotes", customerId), this.list("contracts", customerId), this.list("invoices", customerId), this.list("messages", customerId), this.listNotifications(customerId),
     ]);
-    return { profile, quotes, contracts, invoices, messages, notifications };
+    const visibleMessages = [];
+    for (const message of messages) {
+      if (message.projectId) {
+        const project = (await this.db.collection("projects").doc(String(message.projectId)).get()).data();
+        if (!project || project.customerId !== customerId || project.accessEnabled !== true || !project.unlockedAt) continue;
+      }
+      visibleMessages.push(message);
+    }
+    return { profile, quotes, contracts, invoices, messages: visibleMessages, notifications };
   }
   async createCustomerMessage(customerId: string, input: { subject: string; body: string }) {
     const ref = await this.db.collection("messages").add({ customerId, subject: input.subject, body: input.body, senderRole: "customer", status: "open", createdAt: this.timestamp(), updatedAt: this.timestamp() });
@@ -91,8 +101,11 @@ export class FirebaseBusinessRepository implements BusinessRepository {
     await this.db.runTransaction(async (tx) => {
       const ref = this.db.collection("quotes").doc(id); const snapshot = await tx.get(ref);
       if (!snapshot.exists) throw new ApiError(404, "NOT_FOUND", "Quote was not found.");
-      const quote = snapshot.data()!; const now = this.timestamp(); tx.update(ref, { ...reply, updatedAt: now });
-      const message = this.db.collection("messages").doc(); tx.set(message, { customerId: quote.customerId, subject: `Quote update: ${quote.projectType}`, body: reply.adminReply, senderRole: "admin", status: "open", createdAt: now, updatedAt: now });
+      const quote = snapshot.data()!;
+      if (!quote.customerId) throw new ApiError(409, "QUOTE_CUSTOMER_REQUIRED", "A customer account is required before issuing a portal offer.");
+      if (["accepted", "rejected", "cancelled"].includes(quote.status)) throw new ApiError(409, "QUOTE_STATE_INVALID", "This quote is final.");
+      const now = this.timestamp(); tx.update(ref, { ...reply, revision: Number(quote.revision ?? 0) + 1, updatedAt: now });
+      const message = this.db.collection("messages").doc(); tx.set(message, { customerId: quote.customerId, subject: `Quote update: ${quote.projectType}`, body: reply.adminReply, senderRole: "admin", status: "unread", createdAt: now, updatedAt: now });
       const notification = this.db.collection("notifications").doc(); tx.set(notification, { customerId: quote.customerId, title: "Quote reply received", body: reply.adminReply, status: "unread", createdAt: now, updatedAt: now });
       tx.set(this.db.collection("auditLogs").doc(), { actorId, actorEmail: actorEmail ?? null, action: "quote_reply_updated", targetCollection: "quotes", targetId: id, detail: `Quote marked ${reply.status}.`, createdAt: now });
     });
@@ -120,7 +133,40 @@ export class FirebaseBusinessRepository implements BusinessRepository {
     const ref = this.db.collection("contracts").doc(id);
     return this.db.runTransaction(async (tx) => {
       const found = await tx.get(ref); if (!found.exists || found.data()?.customerId !== customerId) return false;
+      const contract = found.data()!;
+      if (contract.status === "signed" && contract.signedBy === customerId && contract.signedAt && contract.typedSignature === typedSignature) return true;
+      if (contract.status !== "assigned" || contract.signedAt || contract.signedBy || typeof contract.scope !== "string" || !contract.scope.trim() || !contract.contractVersion || !contract.title || typedSignature.trim().length < 2 || typedSignature.length > 160) throw new ApiError(409, "CONTRACT_NOT_SIGNABLE", "The contract is not in a valid signable state.");
       tx.update(ref, { status: "signed", signedBy: customerId, typedSignature, signedAt: this.timestamp(), updatedAt: this.timestamp(), audit: { action: "contract_signed", customerId, customerEmail: customerEmail ?? null, contractVersion: found.data()?.contractVersion ?? "unknown", recordedAt: new Date().toISOString() } }); return true;
+    });
+  }
+
+  async decideQuote(id: string, customerId: string, decision: "accepted" | "rejected", revision: number) {
+    await this.db.runTransaction(async tx => {
+      const ref = this.db.collection("quotes").doc(id); const quote = (await tx.get(ref)).data();
+      if (!quote || quote.customerId !== customerId) throw new ApiError(404, "NOT_FOUND", "Quote was not found.");
+      if (quote.revision !== revision) throw new ApiError(409, "QUOTE_REVISION_MISMATCH", "Review the current quote before deciding.");
+      if (quote.status === decision) return;
+      if (quote.status !== "approved" || !quote.adminReply || !Number.isSafeInteger(quote.amountCents) || quote.amountCents < 100 || !["eur", "usd"].includes(quote.currency)) throw new ApiError(409, "QUOTE_STATE_INVALID", "Only an issued commercial quote can be accepted or rejected.");
+      const now = this.timestamp();
+      tx.update(ref, { status: decision, decidedBy: customerId, decidedAt: now, updatedAt: now });
+      tx.set(this.db.collection("auditLogs").doc(), { actorId: customerId, action: `quote_${decision}`, targetCollection: "quotes", targetId: id, revision, createdAt: now });
+    });
+  }
+
+  async replyToMessage(id: string, body: string, actorId: string) {
+    return this.db.runTransaction(async tx => {
+      const sourceRef = this.db.collection("messages").doc(id); const source = (await tx.get(sourceRef)).data();
+      if (!source || !source.customerId || source.senderRole !== "customer") throw new ApiError(404, "NOT_FOUND", "Customer message was not found.");
+      if (source.projectId) {
+        const project = (await tx.get(this.db.collection("projects").doc(source.projectId))).data();
+        if (!project || project.customerId !== source.customerId) throw new ApiError(409, "MESSAGE_SCOPE_INVALID", "Message does not belong to this project customer.");
+      }
+      const ref = this.db.collection("messages").doc(); const now = this.timestamp();
+      tx.create(ref, { customerId: source.customerId, ...(source.projectId ? { projectId: source.projectId } : {}), replyTo: id, subject: source.subject ?? "Project reply", body, senderRole: "admin", senderId: actorId, status: "unread", createdAt: now, updatedAt: now });
+      tx.update(sourceRef, { status: "read", updatedAt: now });
+      tx.set(this.db.collection("notifications").doc(), { customerId: source.customerId, title: "Averon reply received", body, status: "unread", createdAt: now, updatedAt: now });
+      tx.set(this.db.collection("auditLogs").doc(), { actorId, action: "message_replied", targetCollection: "messages", targetId: ref.id, createdAt: now });
+      return ref.id;
     });
   }
 }

@@ -25,7 +25,7 @@ service cloud.firestore {
     }
 
     match /quotes/{quoteId} {
-      allow create: if ownsCustomerField();
+      allow create: if false;
       allow read: if ownsExistingCustomerField() || isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
@@ -34,19 +34,8 @@ service cloud.firestore {
     match /contracts/{contractId} {
       allow read: if ownsExistingCustomerField() || isAdmin();
       allow create, delete: if isAdmin();
-      allow update: if isAdmin()
-        || (
-          ownsExistingCustomerField()
-          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
-            'status',
-            'signedBy',
-            'typedSignature',
-            'signedAt',
-            'updatedAt',
-            'audit'
-          ])
-          && request.resource.data.signedBy == request.auth.uid
-        );
+      // Contract lifecycle writes go through the authenticated API only.
+      allow update: if false;
     }
 
     match /invoices/{invoiceId} {
@@ -60,8 +49,13 @@ service cloud.firestore {
     }
 
     match /messages/{messageId} {
-      allow create: if ownsCustomerField() || isAdmin();
-      allow read: if ownsExistingCustomerField() || isAdmin();
+      // Association and sender identity are assigned by the API.
+      allow create: if false;
+      allow read: if isAdmin() || (ownsExistingCustomerField()
+        && (!('projectId' in resource.data)
+          || (get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.customerId == request.auth.uid
+            && get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.accessEnabled == true
+            && get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.unlockedAt != null)));
       allow update, delete: if isAdmin();
     }
 

@@ -6,6 +6,7 @@ import { parseCollection, parseContractAssignment, parseCustomerProfileInput, pa
 
 export async function handleBusinessRoute(input: {
   method: string; path: string; body: unknown; auth: AuthContext; repository: BusinessRepository;
+  activateContract?: (contractId: string, customerId: string) => Promise<unknown>;
 }): Promise<{ status: number; data: unknown } | null> {
   const segments = input.path.split("/").filter(Boolean).slice(2);
   if (!segments.length) return null;
@@ -43,9 +44,23 @@ export async function handleBusinessRoute(input: {
     const body = input.body as Record<string, unknown>; const signature = typeof body?.typedSignature === "string" ? body.typedSignature.trim() : "";
     if (Object.keys(body ?? {}).some((key) => key !== "typedSignature") || signature.length < 2 || signature.length > 160) throw new ApiError(400, "VALIDATION_ERROR", "A valid typedSignature is required.");
     if (!await input.repository.signContract(parseId(id), input.auth.user.userId, input.auth.user.email, signature)) throw new ApiError(404, "NOT_FOUND", "Contract was not found.");
-    return { status: 200, data: { contractId: id, status: "signed" } };
+    const activation = await input.activateContract?.(id, input.auth.user.userId);
+    return { status: 200, data: { contractId: id, status: "signed", activation } };
+  }
+  if (input.method === "PATCH" && domain === "quotes" && id && action === "decision") {
+    const body = input.body as Record<string, unknown>;
+    if (!body || Object.keys(body).some(key => !["decision", "revision"].includes(key)) || !["accepted", "rejected"].includes(String(body.decision)) || !Number.isSafeInteger(body.revision) || Number(body.revision) < 1) throw new ApiError(400, "VALIDATION_ERROR", "A decision and current quote revision are required.");
+    if (!input.repository.decideQuote) throw new ApiError(503, "UNAVAILABLE", "Quote decisions are unavailable.");
+    await input.repository.decideQuote(parseId(id), input.auth.user.userId, body.decision as "accepted" | "rejected", Number(body.revision));
+    return { status: 200, data: { quoteId: id, status: body.decision } };
   }
   requireAdmin(input.auth);
+  if (input.method === "POST" && domain === "messages" && id && action === "reply") {
+    const body = input.body as Record<string, unknown>; const reply = typeof body?.body === "string" ? body.body.trim() : "";
+    if (!body || Object.keys(body).some(key => key !== "body") || !reply || reply.length > 4000) throw new ApiError(400, "VALIDATION_ERROR", "A reply body is required.");
+    if (!input.repository.replyToMessage) throw new ApiError(503, "UNAVAILABLE", "Replies are unavailable.");
+    return { status: 201, data: { messageId: await input.repository.replyToMessage(parseId(id), reply, input.auth.user.userId) } };
+  }
   if (input.method === "GET" && domain === "admin" && id === "dashboard") {
     const names = ["users", "quotes", "contracts", "invoices", "payments", "messages", "notifications"] as const;
     const records = await Promise.all(names.map((name) => input.repository.list(name)));

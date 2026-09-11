@@ -36,8 +36,14 @@ export class FirebasePaymentRepository implements PaymentRepository {
       const invoiceRef = this.db.collection("invoices").doc(invoiceId); const invoice = await tx.get(invoiceRef); if (!invoice.exists) throw new ApiError(404, "PAYMENT_NOT_FOUND", "Payment invoice was not found.");
       const expected = invoice.data()!;
       if (expected.customerId !== event.customerId || expected.contractId !== event.contractId || Number(expected.amountCents) !== event.amountCents || String(expected.currency).toLowerCase() !== event.currency?.toLowerCase()) throw new ApiError(409, "PAYMENT_AMOUNT_MISMATCH", "Payment reconciliation requires investigation.");
+      const paymentRef = this.db.collection("payments").doc(checkoutReference);
+      const previous = (await tx.get(paymentRef)).data();
+      if (previous?.status === "paid" && eventType !== "paid") {
+        tx.create(eventRef, { processedAt: this.now(), type: event.type, checkoutReference });
+        return "ignored" as const;
+      }
       const now = this.now(); const status = eventType;
-      tx.set(this.db.collection("payments").doc(checkoutReference), { status, provider: "stripe", providerReference: checkoutReference, checkoutReference, updatedAt: now, ...(status === "paid" ? { paidAt: now } : {}) }, { merge: true });
+      tx.set(paymentRef, { customerId: expected.customerId, contractId: expected.contractId, invoiceId, amountCents: expected.amountCents, currency: expected.currency, status, provider: "stripe", providerReference: checkoutReference, checkoutReference, updatedAt: now, ...(status === "paid" ? { paidAt: now } : {}) }, { merge: true });
       if (status === "paid") {
         tx.set(invoiceRef, { status: "paid", paidAt: now, updatedAt: now }, { merge: true });
         tx.set(this.db.collection("notifications").doc(), { customerId: event.customerId, title: "Payment received", body: `Invoice ${event.invoiceId} has been paid.`, status: "unread", createdAt: now, updatedAt: now });

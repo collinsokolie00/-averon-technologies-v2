@@ -7,7 +7,7 @@ export interface QuoteSubmission {
   customerEmail: string; customerName: string; company: string; projectType: string; budget: string; message: string;
 }
 
-export interface QuoteReply { status: "approved" | "replied" | "cancelled"; adminReply: string }
+export interface QuoteReply { status: "approved" | "replied" | "cancelled"; adminReply: string; amountCents?: number; currency?: "eur" | "usd" }
 
 export interface CustomerProfileInput { name?: string; company?: string; phone?: string; notificationPreference?: "important" | "all" | "weekly"; communicationPreference?: "email" | "portal"; authProvider?: "password" | "google" }
 
